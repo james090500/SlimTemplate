@@ -5,6 +5,7 @@
   abstract class Controller {
 
     private static $app;
+    public static $db;
 
     /**
      * Create instance of the controller so it doesn't get remade every time it's extended
@@ -13,6 +14,7 @@
      */
     public static function createInstance($app) {
       self::$app = $app;
+      self::$db = $app->getContainer()->get('database');
     }
 
     /**

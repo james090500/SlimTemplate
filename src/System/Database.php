@@ -1,35 +1,37 @@
 <?php
   Namespace __PROJECT__\System;
 
+  use \Medoo\Medoo;
   use \__PROJECT__\System\MedooCustom;
 
-  class Database {
-
-    private static $INSTANCE;
-    private $database;
+  class Database extends Medoo {
 
     /**
-     * Creates the new instance
+     * Updates the database if the record exists
+     * @param  String $table The table name
+     * @param  Array  $where The where statement
+     * @param  Array  $data  The data to update/create with
+     * @return Void
      */
-    public function __construct() {
-      $this->database = new MedooCustom([
-        'database_type' => $_ENV['DB_TYPE'],
-        'database_name' => $_ENV['DB_NAME'],
-        'server' => $_ENV['DB_HOST'],
-        'username' => $_ENV['DB_USERNAME'],
-        'password' => $_ENV['DB_PASSWORD'],
-      ]);
+    public function updateOrCreate(String $table, Array $where, Array $data) {
+      if($this->has($table, $where)) {
+        $this->update($table, $data, $where);
+      } else {
+        $this->insert($table, array_merge($where, $data));
+      }
     }
 
     /**
      * Returns a single instance of the database
      * @return Meedo The DB Instance
      */
-    public static function getInstance() {
-      return self::$INSTANCE->database;
-    }
-
-    public static function createInstance() {
-      self::$INSTANCE = new Database();
+    public static function getDatabase() {
+      return new Database([
+        'database_type' => $_ENV['DB_TYPE'],
+        'database_name' => $_ENV['DB_NAME'],
+        'server' => $_ENV['DB_HOST'],
+        'username' => $_ENV['DB_USERNAME'],
+        'password' => $_ENV['DB_PASSWORD'],
+      ]);
     }
   }

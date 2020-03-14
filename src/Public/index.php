@@ -5,7 +5,7 @@
   use \__PROJECT__\Controllers\Controller;
   use \__PROJECT__\System\Settings;
   use \__PROJECT__\Routes\WebRoutes;
-  use \__PROJECT__\System\Database as DB;
+  use \__PROJECT__\System\Database;
   use \Dotenv\Dotenv;
   use \Slim\Views\Twig;
   use \Slim\Views\TwigExtension;
@@ -23,15 +23,16 @@
      * @return Void
      */
     private function loadEssentials() {
+      //Start session, set time and autoloader
       session_start();
       date_default_timezone_set('UTC');
       spl_autoload_register('self::classAutoloader');
 
+      //Load .env
       $dotenv = Dotenv::createImmutable(__DIR__, '../.env');
       $dotenv->load();
 
-      DB::createInstance();
-
+      //Set Dev mode
       define('DEVELOPMENT_MODE', filter_var(getenv('DEV_MODE'), FILTER_VALIDATE_BOOLEAN));
       Settings::devMode();
     }
@@ -54,25 +55,37 @@
     public static function start() {
       //Load Essential variables
       self::loadEssentials();
+
       // Create Container
       $container = new Container();
       AppFactory::setContainer($container);
+
       // Set view in Container
       $container->set('view', function() {
           return new Twig('../View', [ 'cache' => (DEVELOPMENT_MODE) ? false : '../View/Cache' ]);
       });
+
+      // Set the database in container
+      $container->set('database', function () {
+        return Database::getDatabase();
+      });
+
       //Create App
       $app = AppFactory::create();
+
       //Add some twig middleware
       $app->add(TwigMiddleware::createFromContainer($app));
       $app->add($app->addErrorMiddleware(true, true, true));
+
       //If member session exists sign in
       if(isset($_SESSION['MEMBER'])) {
         $view->getEnvironment()->addGlobal('user', $_SESSION['MEMBER']);
       }
+
       //Start an instance of controller and routing
       Controller::createInstance($app);
       WebRoutes::start($app);
+
       //Start the app
       $app->run();
     }
