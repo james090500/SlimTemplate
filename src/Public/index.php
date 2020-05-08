@@ -29,6 +29,12 @@
       spl_autoload_register('self::classAutoloader');
 
       //Load .env
+      if(!file_exists('../.env')) {
+        if(!copy('../.env.example', '../.env')) {
+          die("Couldn't copy .env.example, probably a permission issue");
+        }
+      }
+      
       $dotenv = Dotenv::createImmutable(__DIR__, '../.env');
       $dotenv->load();
 
@@ -62,7 +68,7 @@
       AppFactory::setContainer($container);
 
       //Create Cache
-      if(!is_dir('../View/Cache')) {
+      if(is_dir('../View/Cache')) {
         if(!mkdir('../View/Cache')) {
           die("Couldn't create Cache directory");
         }
