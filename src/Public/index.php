@@ -33,8 +33,9 @@
       $dotenv->load();
 
       //Set Dev mode
-      define('DEVELOPMENT_MODE', filter_var(getenv('DEV_MODE'), FILTER_VALIDATE_BOOLEAN));
-      Settings::devMode();
+      if(getenv('DEV_MODE')) {
+        Settings::devMode();
+      }
     }
 
     /**
@@ -56,16 +57,26 @@
       //Load Essential variables
       self::loadEssentials();
 
-      // Create Container
+      //Create Container
       $container = new Container();
       AppFactory::setContainer($container);
 
-      // Set view in Container
+      //Create Cache
+      if(!is_dir('../View/Cache')) {
+        if(!mkdir('../View/Cache')) {
+          die("Couldn't create Cache directory");
+        }
+      }
+
+      //Set view in Container
       $container->set('view', function() {
-          return new Twig('../View', [ 'cache' => (DEVELOPMENT_MODE) ? false : '../View/Cache' ]);
+          return new Twig('../View', [
+            'debug' => getenv('DEV_MODE'),
+            'cache' => '../View/Cache'
+          ]);
       });
 
-      // Set the database in container
+      //Set the database in container
       $container->set('database', function () {
         return Database::getDatabase();
       });
